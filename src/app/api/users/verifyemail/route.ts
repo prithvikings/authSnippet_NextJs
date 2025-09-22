@@ -17,22 +17,24 @@ export async function POST(request: NextRequest) {
     // hash the token for DB lookup
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
+    // Use correct camelCase field names from your schema
     const user = await User.findOne({
-      verifytoken: hashedToken,
-      verifytokenexpiry: { $gt: Date.now() }, // check expiry
+      verifyToken: hashedToken,
+      verifyTokenExpiry: { $gt: Date.now() }, // check expiry
     });
 
     if (!user) {
       return NextResponse.json({ message: "Invalid or expired token" }, { status: 400 });
     }
 
+    // mark user as verified and remove token fields
     user.isVerified = true;
-    user.verifytoken = undefined;
-    user.verifytokenexpiry = undefined;
+    user.verifyToken = undefined;
+    user.verifyTokenExpiry = undefined;
     await user.save();
 
     return NextResponse.json({ message: "Email verified successfully!" }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    return NextResponse.json({ message: err.message || "Internal Server Error" }, { status: 500 });
   }
 }
