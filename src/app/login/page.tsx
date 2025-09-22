@@ -37,7 +37,7 @@ const Login = () => {
 
       toast.success('Login Successful!');
       setUser({ email: '', password: '' });
-      router.push('/me'); // redirect after login
+      router.push('/profile'); // redirect after login
     } catch (err: any) {
       toast.error(err.message);
       setError(err.message);
