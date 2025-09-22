@@ -31,8 +31,7 @@ export async function POST(request:NextRequest){
         }else{
             return NextResponse.json({message:"User not created"},{status:400});
         }
-    }catch(error){
-        return NextResponse.json({message:error},{status:500});
-    }
+    }catch(error:any){
+    return NextResponse.json({ message: error.message || "Internal Server Error" }, { status: 500 });
 }
-export async function GET(request:NextRequest){}
+}

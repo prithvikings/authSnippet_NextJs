@@ -1,7 +1,7 @@
 import User from "@/models/user.model";
 import nodemailer from "nodemailer";
-import bcryptjs from "bcryptjs";
-import {MailtrapTransport} from "mailtrap";
+import crypto from "crypto";
+
 export const sendEmail = async ({
   email,
   emailtype,
@@ -12,42 +12,53 @@ export const sendEmail = async ({
   userId: string;
 }) => {
   try {
-    const token = process.env.MAIL_TOKEN;
-    const hashtoken = await bcryptjs.hash(userId.toString(), 10);
+    // generate a random token
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
     if (emailtype === "VERIFY") {
       await User.findByIdAndUpdate(userId, {
-        verifytoken: hashtoken,
-        verifytokenexpiry: Date.now() + 3600000,
+        verifytoken: hashedToken,
+        verifytokenexpiry: Date.now() + 3600000, // 1h
       });
     } else if (emailtype === "RESET") {
       await User.findByIdAndUpdate(userId, {
-        forgotPasswordToken: hashtoken,
-        forgotPasswordExpiry: Date.now() + 3600000,
+        forgotPasswordToken: hashedToken,
+        forgotPasswordExpiry: Date.now() + 3600000, // 1h
       });
     }
 
-    // Create a test account or replace with real credentials.
-    const transporter = nodemailer.createTransport(
-      MailtrapTransport({
-        token: token,
-        testInboxId: 4046639,
-      })
-    );
+    // setup mail transporter
+    const transporter = nodemailer.createTransport({
+      host: "sandbox.smtp.mailtrap.io",
+      port: 2525,
+      auth: {
+        user: process.env.MAIL_USER!, // move creds to .env
+        pass: process.env.MAIL_PASS!,
+      },
+    });
+
+    const url =
+      emailtype === "VERIFY"
+        ? `${process.env.NEXT_PUBLIC_HOST}/api/users/verifyemail?token=${token}`
+        : `${process.env.NEXT_PUBLIC_HOST}/api/users/resetpassword?token=${token}`;
 
     const mailoptions = {
-      from: "prithvi07raj07@gmail.com", // sender address
-      to: email, // list of receivers
-      subject:
-        emailtype === "VERIFY" ? "Verify your email" : "Reset your password", // Subject line
-      html:
-        emailtype === "VERIFY"
-          ? "<p>Please verify your email</p>"
-          : "<p>Please reset your password</p>", // HTML body
+      from: "hitesh@gmail.com",
+      to: email,
+      subject: emailtype === "VERIFY" ? "Verify your email" : "Reset your password",
+      html: `<p>Click <a href="${url}">here</a> to ${
+        emailtype === "VERIFY" ? "verify your email" : "reset your password"
+      }<br> Or copy and paste this link: ${url}</p>`,
     };
 
-    const info = await transporter.sendMail(mailoptions);
-    return info;
-  } catch (err) {
-    throw new Error("Error sending email: " + err);
+    const mailresponse = await transporter.sendMail(mailoptions);
+    return mailresponse;
+  } catch (err: any) {
+    throw new Error("Error sending email: " + err.message);
   }
 };
+
