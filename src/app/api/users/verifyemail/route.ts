@@ -5,10 +5,10 @@ import { connectDB } from "@/dbConfig/dbconfig";
 
 connectDB();
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const token = url.searchParams.get("token");
+    const reqBody = await request.json();
+    const { token } = reqBody;
 
     if (!token) {
       return NextResponse.json({ message: "Token missing" }, { status: 400 });
