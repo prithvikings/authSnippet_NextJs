@@ -49,7 +49,7 @@ export const sendEmail = async ({
         : `${process.env.DOMAIN}/resetpassword?token=${token}`;
 
     const mailoptions = {
-      from: "hitesh@gmail.com",
+      from: "prithvi@gmail.com",
       to: email,
       subject: emailtype === "VERIFY" ? "Verify your email" : "Reset your password",
       html: `<p>Click <a href="${url}">here</a> to ${
