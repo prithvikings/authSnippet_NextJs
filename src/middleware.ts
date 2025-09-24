@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(token ? '/profile' : '/login', request.url))
   }
 
+  
   // Public routes
   const publicPaths = ['/login', '/signup', '/verifyemail', '/resetpassword']
   const isPublicPath = publicPaths.some((p) => path.startsWith(p))
